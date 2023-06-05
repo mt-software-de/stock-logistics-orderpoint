@@ -266,11 +266,17 @@ class StockLocationOrderpoint(models.Model):
         )
         qties_replenished = defaultdict(lambda: defaultdict(lambda: 0))
         qties_to_replenish = defaultdict(list)
+        locations = self.env["stock.location"].browse([location.id for location in moves_by_location.keys()])
         for orderpoint in self:
-            if orderpoint.location_id not in moves_by_location:
+            found_orderpoint = orderpoint.filtered_domain([("location_id", "parent_of", locations.ids)])
+            if not found_orderpoint:
                 continue
 
-            for product in moves_by_location[orderpoint.location_id].product_id:
+            found_moves_by_location = dict()
+            for location in locations.filtered_domain([("id", "child_of", orderpoint.location_id.id)]):
+                found_moves_by_location[location] = moves_by_location[location]
+
+            for product in found_moves_by_location[orderpoint.location_id].product_id:
                 qties_replenished_for_location = qties_replenished[
                     orderpoint.location_id
                 ]
@@ -311,7 +317,8 @@ class StockLocationOrderpoint(models.Model):
         moves_by_location = self._find_potential_moves_to_replenish_by_location(
             products
         )
-        return self._sort_orderpoints().__prepare_procurements(moves_by_location)
+        self_sorted = self._sort_orderpoints()
+        return self_sorted.__prepare_procurements(moves_by_location)
 
     def run_replenishment(self, products=False):
         """Run the replenishment for all potential products or only a selection"""

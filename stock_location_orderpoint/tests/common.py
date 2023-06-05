@@ -9,8 +9,12 @@ class TestLocationOrderpointCommon(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.location_obj = cls.env["stock.location"]
         cls.uom_unit = cls.env.ref("uom.product_uom_unit")
-        cls.product = cls.env["product.product"].create(
+        cls.product_obj = cls.env["product.product"]
+        cls.stock_location_replenish = cls.env.ref("stock_location_orderpoint.stock_location_replenish")
+        cls.stock_location_orderpoint = cls.env.ref("stock_location_orderpoint.stock_location_orderpoint_1")
+        cls.product = cls.product_obj.create(
             {
                 "name": "Desk Combination",
                 "type": "product",
